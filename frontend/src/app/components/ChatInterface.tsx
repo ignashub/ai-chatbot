@@ -76,7 +76,7 @@ const ChatInterface = () => {
   };
 
   return (
-    <Card title="Chat Interface" className="shadow-lg">
+    <Card title="Chat" className="shadow-lg">
       <Toast ref={toast} />
       <div className="mb-4">
         <label htmlFor="systemPrompt">System Prompt:</label>

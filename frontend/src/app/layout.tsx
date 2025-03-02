@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Health and Wellness Coach",
-  description: "Your personal health assistant",
+  title: "A.I Chatbot",
+  description: "Your personal a.i chatbot",
 };
 
 export default function RootLayout({
