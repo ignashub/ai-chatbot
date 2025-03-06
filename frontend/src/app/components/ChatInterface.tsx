@@ -9,7 +9,7 @@ import { Card } from 'primereact/card';
 import { Tooltip } from 'primereact/tooltip';
 import { Toast } from 'primereact/toast';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import { log } from 'console';
+import { Dialog } from 'primereact/dialog'; // Import Dialog component
 
 const ChatInterface = () => {
   const [message, setMessage] = useState('');
@@ -20,6 +20,8 @@ const ChatInterface = () => {
   const [presencePenalty, setPresencePenalty] = useState(0.0);
   const [systemPrompt, setSystemPrompt] = useState('You are a Health and Wellness Coach.');
   const [loading, setLoading] = useState(false);
+  const [cost, setCost] = useState<string | null>(null);
+  const [showHelp, setShowHelp] = useState(false); // State to control the help dialog
   const toast = useRef<Toast>(null);
 
   const sendMessage = async () => {
@@ -27,7 +29,7 @@ const ChatInterface = () => {
 
     setChatHistory([...chatHistory, { user: message, bot: '' }]);
     setLoading(true);
-    console.log(message, systemPrompt);
+    setCost(null);
     try {
       const response = await axios.post('http://localhost:5000/chat', {
         message,
@@ -38,8 +40,9 @@ const ChatInterface = () => {
         presencePenalty,
       });
       const botMessage = response.data.response;
+      const promptCost = response.data.estimated_cost;
+      setCost(promptCost);
 
-      // Simulate typing animation
       let index = 0;
       const typingInterval = setInterval(() => {
         setChatHistory((prev) => {
@@ -52,7 +55,7 @@ const ChatInterface = () => {
           clearInterval(typingInterval);
           setLoading(false);
         }
-      }, 15); // Adjust typing speed here
+      }, 15);
     } catch (error) {
       const errorMessage = error.response?.data?.error || 'An error occurred';
       console.error('Error sending message:', error);
@@ -108,30 +111,47 @@ const ChatInterface = () => {
           className="w-full"
         />
         <Button label="Send" icon="pi pi-send" onClick={sendMessage} disabled={loading} />
+        <Button label="Help" icon="pi pi-question-circle" onClick={() => setShowHelp(true)} /> {/* Help button */}
       </div>
+      {cost && (
+        <div className="mb-4">
+          <p><strong>Cost of this prompt:</strong> {cost}</p>
+        </div>
+      )}
       <div className="flex flex-col gap-4">
         <div>
           <label>Temperature: {temperature.toFixed(1)}</label>
-          <i className="pi pi-info-circle" data-pr-tooltip="Controls randomness" />
+          <i className="pi pi-info-circle" data-pr-tooltip="Controls randomness. Example: At temperature 0.2, responses are more focused and deterministic. At 0.8, responses are more creative and varied. Low values are good for factual queries, high values for creative tasks." />
           <Slider value={temperature} onChange={(e) => setTemperature(e.value)} min={0} max={1} step={0.1} />
         </div>
         <div>
           <label>Top P: {topP.toFixed(1)}</label>
-          <i className="pi pi-info-circle" data-pr-tooltip="Controls diversity" />
+          <i className="pi pi-info-circle" data-pr-tooltip="Controls diversity of responses. Example: At 0.3, responses are more focused and predictable. At 0.9, responses include more variety and unexpected ideas. Works well with Temperature to balance creativity and relevance." />
           <Slider value={topP} onChange={(e) => setTopP(e.value)} min={0} max={1} step={0.1} />
         </div>
         <div>
           <label>Frequency Penalty: {frequencyPenalty.toFixed(1)}</label>
-          <i className="pi pi-info-circle" data-pr-tooltip="Penalizes repeated words" />
+          <i className="pi pi-info-circle" data-pr-tooltip="Penalizes repeated words. Example: With a high frequency penalty, instead of saying great, great, great multiple times, the model might use alternatives like excellent, wonderful, and fantastic." />
           <Slider value={frequencyPenalty} onChange={(e) => setFrequencyPenalty(e.value)} min={0} max={2} step={0.1} />
         </div>
         <div>
           <label>Presence Penalty: {presencePenalty.toFixed(1)}</label>
-          <i className="pi pi-info-circle" data-pr-tooltip="Encourages new topics" />
+          <i className="pi pi-info-circle" data-pr-tooltip="Encourages new topics. Example: With a high presence penalty, if you've been discussing exercise, the model is more likely to branch out to related topics like nutrition or recovery rather than continuing to elaborate on exercise." />
           <Slider value={presencePenalty} onChange={(e) => setPresencePenalty(e.value)} min={0} max={2} step={0.1} />
         </div>
       </div>
       <Tooltip target=".pi-info-circle" />
+
+      {/* Help Dialog */}
+      <Dialog header="How to Use the Chatbot" visible={showHelp} style={{ width: '50vw' }} onHide={() => setShowHelp(false)}>
+        <p>Welcome to your personal AI chatbot! Here's how you can use this application:</p>
+        <ul>
+          <li>Enter your message in the input field and click 'Send' to interact with the bot.</li>
+          <li>Adjust the settings like Temperature, Top P, Frequency Penalty, and Presence Penalty to customize the bot's responses.</li>
+          <li>The 'System Prompt' sets the context for the AI's responses. You can change it to suit your needs.</li>
+          <li>Click the 'Help' button anytime to view this guide.</li>
+        </ul>
+      </Dialog>
     </Card>
   );
 };
