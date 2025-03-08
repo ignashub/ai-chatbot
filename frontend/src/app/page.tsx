@@ -1,15 +1,30 @@
 import ChatInterface from './components/ChatInterface';
+import RemindersPanel from './components/RemindersPanel';
+import NutritionSearch from './components/NutritionSearch';
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#f0f4f3]">
-      <h1 className="text-2xl font-bold text-[#2e7d32] mb-8">Your Personal A.I Chatbot</h1>
-      <div className="w-full max-w-3xl mx-auto p-4">
-        <ChatInterface />
+    <main className="flex min-h-screen flex-col items-center justify-between p-8 md:p-24">
+      <div className="w-full max-w-5xl">
+        <h1 className="text-4xl font-bold mb-8 text-center">Health & Wellness AI Assistant</h1>
+        
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="md:col-span-2">
+            <ChatInterface />
+          </div>
+          <div className="md:col-span-1">
+            <RemindersPanel />
+            <NutritionSearch />
+          </div>
+        </div>
+        
+        <footer className="mt-8 text-center text-sm text-gray-500">
+          <p>Powered by OpenAI GPT-4 • Built with Next.js and PrimeReact</p>
+        </footer>
+        <div className="fixed bottom-4 right-4 text-sm text-gray-400 dark:text-gray-500 opacity-70 font-light">
+          Ignas Apsega @ Turing College 2025
+        </div>
       </div>
-      <div className="fixed bottom-4 right-4 text-sm text-gray-400 dark:text-gray-500 opacity-70 font-light">
-        Ignas Apsega @ Turing College 2025
-      </div>
-    </div>
+    </main>
   );
 }
