@@ -1,6 +1,8 @@
 import ChatInterface from './components/ChatInterface';
 import RemindersPanel from './components/RemindersPanel';
 import NutritionSearch from './components/NutritionSearch';
+import KnowledgeBase from './components/KnowledgeBase';
+import DocumentUploader from './components/DocumentUploader';
 
 export default function Home() {
   return (
@@ -11,6 +13,8 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="md:col-span-2">
             <ChatInterface />
+            <KnowledgeBase />
+            <DocumentUploader />
           </div>
           <div className="md:col-span-1">
             <RemindersPanel />

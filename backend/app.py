@@ -3,14 +3,15 @@ from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from dotenv import load_dotenv
-from routes import chat_bp
+from routes import api_bp
 
 # Load environment variables
 load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
-CORS(app)
+# Enable CORS for all routes and origins
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Initialize Limiter
 limiter = Limiter(
@@ -20,7 +21,7 @@ limiter = Limiter(
 )
 
 # Register blueprints
-app.register_blueprint(chat_bp)
+app.register_blueprint(api_bp)
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)

@@ -8,6 +8,7 @@ import { Card } from 'primereact/card';
 import { Dropdown } from 'primereact/dropdown';
 import { InputNumber } from 'primereact/inputnumber';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import { Tooltip } from 'primereact/tooltip';
 
 interface NutritionResult {
   success: boolean;
@@ -48,7 +49,7 @@ const NutritionSearch = () => {
     setResult(null);
 
     try {
-      const response = await axios.post('http://localhost:5001/nutrition', {
+      const response = await axios.post('/api/nutrition', {
         food_item: foodItem,
         quantity,
         unit
@@ -66,11 +67,33 @@ const NutritionSearch = () => {
     }
   };
 
+  const cardTitle = (
+    <div className="flex items-center gap-2">
+      <span>Nutrition Search</span>
+      <i 
+        className="pi pi-info-circle cursor-pointer nutrition-tooltip" 
+        data-pr-tooltip="You can ask above the AI: 'What's the nutritional value of an apple?' or 'How many calories are in 200g of chicken breast?'"
+        data-pr-position="right"
+        data-pr-at="right+5 top"
+        style={{ fontSize: '0.9rem' }}
+      />
+    </div>
+  );
+
   return (
-    <Card title="Nutrition Search" className="shadow-lg mb-4">
+    <Card title={cardTitle} className="shadow-lg mb-4">
+      <Tooltip target=".nutrition-tooltip, .food-item-tooltip, .quantity-tooltip, .unit-tooltip" />
       <div className="flex flex-col gap-3 mb-4">
         <div>
-          <label htmlFor="foodItem" className="block mb-1">Food Item</label>
+          <label htmlFor="foodItem" className="block mb-1">
+            Food Item
+            <i 
+              className="pi pi-info-circle cursor-pointer ml-2 food-item-tooltip" 
+              data-pr-tooltip="Enter a food name like 'apple', 'chicken breast', 'salmon', 'broccoli', 'rice', or 'egg'. Our database contains nutrition information for common foods."
+              data-pr-position="right"
+              style={{ fontSize: '0.9rem' }}
+            />
+          </label>
           <InputText
             id="foodItem"
             value={foodItem}
@@ -82,7 +105,15 @@ const NutritionSearch = () => {
         
         <div className="flex gap-3">
           <div className="flex-1">
-            <label htmlFor="quantity" className="block mb-1">Quantity</label>
+            <label htmlFor="quantity" className="block mb-1">
+              Quantity
+              <i 
+                className="pi pi-info-circle cursor-pointer ml-2 quantity-tooltip" 
+                data-pr-tooltip="Enter the amount of food you want nutrition information for. Default is 100."
+                data-pr-position="top"
+                style={{ fontSize: '0.9rem' }}
+              />
+            </label>
             <InputNumber
               id="quantity"
               value={quantity}
@@ -93,7 +124,15 @@ const NutritionSearch = () => {
           </div>
           
           <div className="flex-1">
-            <label htmlFor="unit" className="block mb-1">Unit</label>
+            <label htmlFor="unit" className="block mb-1">
+              Unit
+              <i 
+                className="pi pi-info-circle cursor-pointer ml-2 unit-tooltip" 
+                data-pr-tooltip="Select the unit of measurement. Options include grams (g), ounces (oz), cups, tablespoons (tbsp), teaspoons (tsp), or servings."
+                data-pr-position="top"
+                style={{ fontSize: '0.9rem' }}
+              />
+            </label>
             <Dropdown
               id="unit"
               value={unit}

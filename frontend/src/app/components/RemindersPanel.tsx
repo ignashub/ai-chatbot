@@ -5,6 +5,7 @@ import axios from 'axios';
 import { Card } from 'primereact/card';
 import { Button } from 'primereact/button';
 import { ProgressSpinner } from 'primereact/progressspinner';
+import { Tooltip } from 'primereact/tooltip';
 
 interface Reminder {
   id: number;
@@ -23,7 +24,7 @@ const RemindersPanel = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.get('http://localhost:5000/reminders');
+      const response = await axios.get('/api/reminders');
       setReminders(response.data);
     } catch (error) {
       console.error('Error fetching reminders:', error);
@@ -48,8 +49,22 @@ const RemindersPanel = () => {
     return date.toLocaleString();
   };
 
+  const cardTitle = (
+    <div className="flex items-center gap-2">
+      <span>Your Reminders</span>
+      <i 
+        className="pi pi-info-circle cursor-pointer reminder-tooltip" 
+        data-pr-tooltip="To set a reminder, ask the AI: 'Remind me to take my vitamins tomorrow at 9 AM' or 'Set a reminder for my workout on Friday at 6 PM'"
+        data-pr-position="right"
+        data-pr-at="right+5 top"
+        style={{ fontSize: '0.9rem' }}
+      />
+    </div>
+  );
+
   return (
-    <Card title="Your Reminders" className="shadow-lg mb-4">
+    <Card title={cardTitle} className="shadow-lg mb-4">
+      <Tooltip target=".reminder-tooltip" />
       <Button 
         label="Refresh" 
         icon="pi pi-refresh" 

@@ -10,11 +10,12 @@ from utils.token_counter import count_tokens
 from utils.cost_calculator import calculate_cost
 from services.function_calling import handle_function_call
 from services.function_definitions import function_definitions
+from services.knowledge_base import get_rag_context, format_citations
 
 def generate_ai_response(user_message, system_prompt, model="gpt-4", temperature=0.7, 
                          top_p=1.0, frequency_penalty=0.0, presence_penalty=0.0):
     """
-    Generate a response from the AI model with function calling support.
+    Generate a response from the AI model with function calling support and RAG.
     
     Args:
         user_message (str): The user's message
@@ -31,13 +32,22 @@ def generate_ai_response(user_message, system_prompt, model="gpt-4", temperature
     api_key = os.getenv('OPENAI_API_KEY')
     client = OpenAI(api_key=api_key)
     
+    # Get RAG context if available
+    rag_context, has_context, source_documents = get_rag_context(user_message)
+    
+    # Prepare system prompt with RAG context if available
+    enhanced_system_prompt = system_prompt
+    if has_context:
+        enhanced_system_prompt += "\n\n" + rag_context
+        enhanced_system_prompt += "\n\nWhen using information from these documents, please cite the sources in your response using numbers in square brackets, e.g., [1], [2], etc."
+    
     # Count input tokens
-    input_text = f"{system_prompt}\n\nUser: {user_message}"
+    input_text = f"{enhanced_system_prompt}\n\nUser: {user_message}"
     input_tokens = count_tokens(input_text, model=model)
     
     # Prepare messages for the API call
     messages = [
-        {"role": "system", "content": system_prompt},
+        {"role": "system", "content": enhanced_system_prompt},
         {"role": "user", "content": user_message}
     ]
     
@@ -50,7 +60,7 @@ def generate_ai_response(user_message, system_prompt, model="gpt-4", temperature
         frequency_penalty=frequency_penalty,
         presence_penalty=presence_penalty,
         tools=function_definitions,
-        tool_choice="auto" #To let the AI decide when to call functions
+        tool_choice="auto"
     )
     
     # Process the response
@@ -109,6 +119,11 @@ def generate_ai_response(user_message, system_prompt, model="gpt-4", temperature
         # No function call, just return the response
         response_text = response_message.content
         output_tokens = response.usage.completion_tokens
+    
+    # Add citations if we used RAG
+    if has_context and source_documents:
+        citations = format_citations(source_documents)
+        response_text += citations
     
     # Calculate cost
     estimated_cost = calculate_cost(input_tokens, output_tokens, model)

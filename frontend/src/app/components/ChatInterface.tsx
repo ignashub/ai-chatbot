@@ -31,7 +31,7 @@ const ChatInterface = () => {
     setLoading(true);
     setCost(null);
     try {
-      const response = await axios.post('http://localhost:5000/chat', {
+      const response = await axios.post('/api/chat', {
         message,
         systemPrompt,
         temperature,
@@ -110,8 +110,8 @@ const ChatInterface = () => {
           placeholder="Type your message..."
           className="w-full"
         />
-        <Button label="Send" icon="pi pi-send" onClick={sendMessage} disabled={loading} />
-        <Button label="Help" icon="pi pi-question-circle" onClick={() => setShowHelp(true)} /> {/* Help button */}
+        <Button label="Send" icon="pi pi-send" onClick={sendMessage} disabled={loading || !message.trim()} />
+        <Button label="Help" icon="pi pi-question-circle" onClick={() => setShowHelp(true)} />
       </div>
       {cost && (
         <div className="mb-4">

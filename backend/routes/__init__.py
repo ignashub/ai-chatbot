@@ -1,3 +1,3 @@
-from .chat import chat_bp
+from .api import api_bp
 
-__all__ = ['chat_bp'] 
+__all__ = ['api_bp'] 
