@@ -3,6 +3,18 @@ import base64
 import os
 import requests
 from langchain_openai import ChatOpenAI
+from urllib.parse import urlparse
+import openai
+import json
+from typing import Tuple, List, Dict, Any, Optional
+from dotenv import load_dotenv
+from openai import OpenAI
+
+# Load environment variables
+load_dotenv()
+
+# Initialize OpenAI client
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
 
 # Banned phrases
 BANNED_PHRASES = [
@@ -17,6 +29,28 @@ PATTERN_RULES = [
     re.compile(r"([a-zA-Z0-9+/]{20,}={0,2})"),  # Base64 encoded text detection
     re.compile(r"([^\w\s]{5,})"),  # Excessive special characters
     re.compile(r"(\bplease\b.*\bforget\b.*\bprevious\b.*\binstruction\b)", re.IGNORECASE),  # Prompt injections
+]
+
+# Define blocklist for basic content filtering
+BLOCKLIST = [
+    # Offensive terms
+    "offensive content",
+    "hate speech",
+    "explicit content",
+    # Add more terms as needed
+]
+
+# List of trusted domains that should bypass strict moderation
+TRUSTED_DOMAINS = [
+    "gfmer.ch",  # Geneva Foundation for Medical Education and Research
+    ".edu",      # Educational institutions
+    ".ac.",      # Academic institutions
+    "who.int",   # World Health Organization
+    "nih.gov",   # National Institutes of Health
+    "cdc.gov",   # Centers for Disease Control
+    "bmj.com",   # British Medical Journal
+    "nejm.org",  # New England Journal of Medicine
+    "lancet.com" # The Lancet
 ]
 
 def detect_encoded_jailbreak(prompt):
@@ -58,40 +92,72 @@ def ai_based_validation(prompt):
     
     return True, "Content is appropriate."
 
-def is_prompt_safe(prompt):
-    """Check if a prompt is safe using heuristic checks, keyword filtering, and OpenAI Moderation API."""
-    
-    # Strict keyword filtering (Immediate Block)
-    for banned in BANNED_PHRASES:
-        if banned in prompt.lower():
-            return False, f"Blocked: '{banned}' is not allowed."
+def is_trusted_domain(url):
+    """Check if the URL is from a trusted domain."""
+    try:
+        parsed_url = urlparse(url)
+        domain = parsed_url.netloc.lower()
         
-    # AI-based validation
-    is_safe, message = ai_based_validation(prompt)
-    if not is_safe:
-        return False, message
+        # Check if domain or any parent domain is in trusted list
+        domain_parts = domain.split('.')
+        for i in range(len(domain_parts) - 1):
+            check_domain = '.'.join(domain_parts[i:])
+            if check_domain in TRUSTED_DOMAINS:
+                return True
+            
+        # Check for academic TLDs
+        if domain.endswith('.edu') or domain.endswith('.ac.uk'):
+            return True
+            
+        return False
+    except:
+        return False
 
-    # Pattern-based heuristic checks
-    for pattern in PATTERN_RULES:
-        if pattern.search(prompt):
-            return False, "Blocked: Suspicious pattern detected."
-
-    # Detect encoded jailbreak attempts
-    if detect_encoded_jailbreak(prompt):
-        return False, "Blocked: Encoded jailbreak attempt detected."
-
-    # OpenAI Moderation API check
-    api_key = os.getenv('OPENAI_API_KEY')
-    headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    response = requests.post(
-        "https://api.openai.com/v1/moderations",
-        json={"input": prompt},
-        headers=headers
-    )
-
-    if response.status_code == 200:
-        results = response.json()
-        if results.get("results", [{}])[0].get("flagged", False):
-            return False, "Blocked due to policy violations."
-
-    return True, "Safe" 
+def is_prompt_safe(prompt: Optional[str]) -> Tuple[bool, str]:
+    """
+    Check if a prompt is safe to process.
+    
+    Args:
+        prompt: The prompt to check
+        
+    Returns:
+        Tuple[bool, str]: A tuple containing a boolean indicating if the prompt is safe and a reason if it's not
+    """
+    # Handle None or empty prompts
+    if prompt is None:
+        return True, ""
+    
+    if not prompt.strip():
+        return True, ""
+    
+    # Check if the prompt is a URL to a trusted domain
+    if prompt.startswith("http"):
+        for domain in TRUSTED_DOMAINS:
+            if domain in prompt.lower():
+                return True, ""
+    
+    # Basic content filtering
+    for term in BLOCKLIST:
+        if term.lower() in prompt.lower():
+            return False, f"Inappropriate content detected: {term}"
+    
+    # Use OpenAI's moderation API for more sophisticated filtering
+    try:
+        response = client.moderations.create(input=prompt)
+        result = response.results[0]
+        
+        if result.flagged:
+            # Find the categories that were flagged
+            flagged_categories = []
+            for category, flagged in result.categories.model_dump().items():
+                if flagged:
+                    flagged_categories.append(category)
+            
+            if flagged_categories:
+                return False, f"Inappropriate content detected by AI validation: {', '.join(flagged_categories)}"
+        
+        return True, ""
+    except Exception as e:
+        print(f"Error in moderation API: {str(e)}")
+        # Fall back to basic filtering if the API call fails
+        return True, "" 

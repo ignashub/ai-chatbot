@@ -66,6 +66,8 @@ Improving the chatbot to be more specialized for your specific domain: IT, HR, m
 Adding a separate text field for the system prompt.
 Implementing more security constraints, like user input validation and system prompt validation. Could we consider utilizing ChatGPT to verify these aspects?
 Add an interactive help feature or chatbot guide explaining how to use the app.
+
+
 Medium:
 
 Adding all of the OpenAI settings (models, temperature, frequency, etc.) for the user to tune as sliders/fields.
@@ -78,6 +80,8 @@ Adding RAG functionality to the app: adding a knowledge base, retrieving when a 
 Provide the user with the ability to choose from a list of LLMs (Gemini, OpenAI, etc.) for this project.
 Think of a creative way; how could you use image generation inside this project and implement it using code?
 Allow users to download conversations or generated data in formats like PDF, CSV, or JSON.
+
+
 Hard:
 
 Using Streamlit (Python) or React (JS) components, implementing a full-fledged chatbot application instead of a one-time call to the OpenAI API.

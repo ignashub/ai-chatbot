@@ -37,11 +37,9 @@ const RemindersPanel = () => {
   useEffect(() => {
     fetchReminders();
     
-    // Set up polling to refresh reminders every 30 seconds
-    const intervalId = setInterval(fetchReminders, 30000);
-    
-    // Clean up interval on component unmount
-    return () => clearInterval(intervalId);
+    // Remove the polling interval to stop constant API calls
+    // const intervalId = setInterval(fetchReminders, 30000);
+    // return () => clearInterval(intervalId);
   }, []);
 
   const formatDateTime = (isoString: string) => {

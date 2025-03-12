@@ -24,3 +24,41 @@ h1 {
 input, button {
   border-radius: 4px;
 }
+
+/* Custom ScrollPanel styling */
+.custom-scrollpanel .p-scrollpanel-wrapper {
+  border-right: 9px solid #f8f9fa;
+}
+
+.custom-scrollpanel .p-scrollpanel-bar {
+  background-color: #dfe7ef;
+  opacity: 1;
+  transition: background-color .2s;
+}
+
+.custom-scrollpanel .p-scrollpanel-bar:hover {
+  background-color: #a0b0c8;
+}
+
+/* Log entry styling */
+.log-entry {
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+}
+
+.log-entry:last-child {
+  border-bottom: none;
+}
+
+.log-timestamp {
+  color: #2196F3;
+  font-size: 0.8rem;
+  margin-right: 8px;
+}
+
+.log-message {
+  font-family: monospace;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

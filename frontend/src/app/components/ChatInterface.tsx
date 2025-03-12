@@ -18,7 +18,7 @@ const ChatInterface = () => {
   const [topP, setTopP] = useState(1.0);
   const [frequencyPenalty, setFrequencyPenalty] = useState(0.0);
   const [presencePenalty, setPresencePenalty] = useState(0.0);
-  const [systemPrompt, setSystemPrompt] = useState('You are a Health and Wellness Coach. You can help set reminders for health activities and provide nutrition information for food items.');
+  const [systemPrompt, setSystemPrompt] = useState('You are a Health and Wellness Coach with access to a knowledge base of health documents. When answering questions about documents, thoroughly search for relevant information and present it accurately. Include specific details from the documents when available, such as measurement methods, frameworks, or tools. Balance comprehensive answers with clarity. You can also help set reminders for health activities and provide nutrition information for food items.');
   const [loading, setLoading] = useState(false);
   const [cost, setCost] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false); // State to control the help dialog
@@ -78,6 +78,26 @@ const ChatInterface = () => {
     setMessage('');
   };
 
+  const formatMessage = (message: string) => {
+    // Check if the message contains sources
+    if (message.includes('Sources:')) {
+      // Split the message into content and sources
+      const [content, sources] = message.split('Sources:');
+      
+      return (
+        <>
+          {content}
+          <div className="mt-1">
+            <span className="font-semibold">Sources:</span>
+            <span className="text-sm text-gray-600">{sources}</span>
+          </div>
+        </>
+      );
+    }
+    
+    return message;
+  };
+
   return (
     <Card title="Chat" className="shadow-lg">
       <Toast ref={toast} />
@@ -94,14 +114,25 @@ const ChatInterface = () => {
           <i className="pi pi-info-circle" data-pr-tooltip="This prompt sets the context for the AI's responses." />
         </div>
       </div>
-      <div className="chat-history p-4 mb-4 max-h-60 overflow-y-auto">
+      <div className="chat-history p-4 mb-4 max-h-96 overflow-y-auto border rounded-lg bg-gray-50">
         {chatHistory.map((chat, index) => (
-          <div key={index} className="mb-2">
-            <p><strong>You:</strong> {chat.user}</p>
-            <p><strong>Bot:</strong> {chat.bot}</p>
+          <div key={index} className="mb-4">
+            <div className="bg-blue-100 p-3 rounded-lg inline-block max-w-[80%] float-right clear-both">
+              <div className="font-bold text-blue-800 mb-1">You</div>
+              <div className="text-blue-700">{chat.user}</div>
+            </div>
+            <div className="clear-both"></div>
+            <div className="bg-white p-3 rounded-lg shadow-sm inline-block max-w-[80%] mt-2">
+              <div className="font-bold text-gray-800 mb-1">Bot</div>
+              <div className="text-gray-700">{formatMessage(chat.bot)}</div>
+            </div>
           </div>
         ))}
-        {loading && <ProgressSpinner style={{ width: '20px', height: '20px' }} strokeWidth="8" />}
+        {loading && (
+          <div className="flex justify-center my-2">
+            <ProgressSpinner style={{ width: '30px', height: '30px' }} strokeWidth="8" />
+          </div>
+        )}
       </div>
       <div className="flex gap-2 mb-4">
         <InputText

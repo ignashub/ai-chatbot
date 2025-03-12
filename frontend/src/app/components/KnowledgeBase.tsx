@@ -35,7 +35,10 @@ const KnowledgeBase = () => {
     setError(null);
 
     try {
+      console.log('Searching knowledge base for:', query);
       const response = await axios.post('/api/knowledge', { query });
+      console.log('Knowledge base response:', response.data);
+      
       setResults(response.data.results);
       
       if (response.data.results.length === 0) {

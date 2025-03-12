@@ -3,6 +3,11 @@ import json
 import sys
 from openai import OpenAI
 from langchain_openai import ChatOpenAI
+from typing import Tuple, List, Dict, Any
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -12,7 +17,85 @@ from services.function_calling import handle_function_call
 from services.function_definitions import function_definitions
 from services.knowledge_base import get_rag_context, format_citations
 
-def generate_ai_response(user_message, system_prompt, model="gpt-4", temperature=0.7, 
+# Initialize OpenAI client
+client = OpenAI(api_key=os.getenv('OPENAI_API_KEY'))
+
+def generate_ai_response(
+    user_message: str,
+    system_prompt: str = "You are a helpful assistant.",
+    model: str = "gpt-4",
+    temperature: float = 0.7,
+    top_p: float = 1.0,
+    frequency_penalty: float = 0.0,
+    presence_penalty: float = 0.0
+) -> Tuple[str, int, int, float]:
+    """
+    Generate an AI response using OpenAI's API.
+    
+    Args:
+        user_message: The user's message
+        system_prompt: The system prompt to use
+        model: The model to use
+        temperature: The temperature to use
+        top_p: The top_p to use
+        frequency_penalty: The frequency penalty to use
+        presence_penalty: The presence penalty to use
+        
+    Returns:
+        Tuple[str, int, int, float]: The AI response, input tokens, output tokens, and estimated cost
+    """
+    try:
+        print(f"Generating AI response for message: {user_message[:100]}...")
+        
+        # Check if this is a document query (contains document context)
+        is_document_query = "Here is information from the documents you asked about:" in user_message or "IMPORTANT SECTION" in user_message
+        
+        # For document queries, use a lower temperature to get more factual responses
+        if is_document_query:
+            temperature = min(temperature, 0.5)
+            print(f"Document query detected, using lower temperature: {temperature}")
+        
+        # Create the messages array
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_message}
+        ]
+        
+        # Call the OpenAI API
+        response = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=temperature,
+            top_p=top_p,
+            frequency_penalty=frequency_penalty,
+            presence_penalty=presence_penalty
+        )
+        
+        # Extract the response text
+        response_text = response.choices[0].message.content
+        
+        # Get token usage
+        input_tokens = response.usage.prompt_tokens
+        output_tokens = response.usage.completion_tokens
+        
+        # Calculate estimated cost
+        # These are approximate costs and may change
+        if model == "gpt-4":
+            input_cost_per_1k = 0.03
+            output_cost_per_1k = 0.06
+        else:  # Default to gpt-3.5-turbo pricing
+            input_cost_per_1k = 0.0015
+            output_cost_per_1k = 0.002
+        
+        estimated_cost = (input_tokens / 1000 * input_cost_per_1k) + (output_tokens / 1000 * output_cost_per_1k)
+        
+        return response_text, input_tokens, output_tokens, estimated_cost
+    except Exception as e:
+        print(f"Error generating AI response: {str(e)}")
+        # Return a default response in case of error
+        return f"I'm sorry, I encountered an error: {str(e)}", 0, 0, 0.0
+
+def generate_ai_response_with_function_calling(user_message, system_prompt, model="gpt-4", temperature=0.7, 
                          top_p=1.0, frequency_penalty=0.0, presence_penalty=0.0):
     """
     Generate a response from the AI model with function calling support and RAG.
@@ -38,8 +121,12 @@ def generate_ai_response(user_message, system_prompt, model="gpt-4", temperature
     # Prepare system prompt with RAG context if available
     enhanced_system_prompt = system_prompt
     if has_context:
-        enhanced_system_prompt += "\n\n" + rag_context
-        enhanced_system_prompt += "\n\nWhen using information from these documents, please cite the sources in your response using numbers in square brackets, e.g., [1], [2], etc."
+        enhanced_system_prompt += "\n\nI have access to information from documents that have been uploaded to my knowledge base. "
+        enhanced_system_prompt += rag_context
+        enhanced_system_prompt += "\n\nWhen using information from these documents, please cite the sources in your response using numbers in square brackets, e.g., [1], [2], etc. If asked about uploaded documents, please use this information to provide a response."
+    else:
+        # Even if no specific context is found, let the model know about the capability
+        enhanced_system_prompt += "\n\nI can access information from documents that have been uploaded to my knowledge base, but I don't see any relevant information for this query. If you're asking about a document you've uploaded, please provide more specific details about what you're looking for."
     
     # Count input tokens
     input_text = f"{enhanced_system_prompt}\n\nUser: {user_message}"
