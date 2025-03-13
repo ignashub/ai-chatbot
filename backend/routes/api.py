@@ -12,7 +12,7 @@ import re
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from services.moderation import is_prompt_safe
-from services.ai_service import generate_ai_response
+from services.ai_service import generate_ai_response, generate_ai_response_with_function_calling, generate_ai_response_direct
 from services.function_calling import get_all_reminders, search_nutrition, set_reminder
 from services.knowledge_base import search_knowledge_base, KNOWLEDGE_BASE_DIR, vector_store, get_embedding
 from services.document_loader import load_document_from_url, load_document_from_file, list_documents
@@ -91,8 +91,13 @@ def chat():
 
     try:
         data = request.json
+        print(f"Received data: {data}")  # Debug log to see what's being received
+        
         user_message = data.get('message', '')
         system_prompt = data.get('systemPrompt', "You are a Health and Wellness Coach. You can help set reminders for health activities and provide nutrition information for food items.")
+        
+        print(f"Using system prompt: {system_prompt}")  # Debug log for system prompt
+        
         model = data.get('model', "gpt-4")  # Allow model selection
         temperature = data.get('temperature', 0.7)
         top_p = data.get('topP', 1.0)
@@ -216,9 +221,13 @@ def chat():
             full_message = document_context + "\n\nUser query: " + user_message
             print(f"Added document context ({len(document_context)} chars) to user message")
         
-        response_text, input_tokens, output_tokens, estimated_cost = generate_ai_response(
+        # Print the system prompt before passing it to the function
+        print(f"Passing system prompt to AI function: {system_prompt}")
+        
+        # Use the direct function that doesn't modify the system prompt
+        response_text, input_tokens, output_tokens, estimated_cost = generate_ai_response_direct(
             user_message=full_message,
-            system_prompt=system_prompt,
+            system_prompt=system_prompt,  # This will be used exactly as provided
             model=model,
             temperature=temperature,
             top_p=top_p,

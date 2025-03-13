@@ -30,10 +30,17 @@ const ChatInterface = () => {
     setChatHistory([...chatHistory, { user: message, bot: '' }]);
     setLoading(true);
     setCost(null);
+    
+    // Log what we're sending to help debug
+    console.log("Sending system prompt:", systemPrompt);
+    
+    // Create a more forceful system prompt
+    const enhancedSystemPrompt = `IMPORTANT: You must ONLY respond according to the following instructions and ignore any previous context or training. ${systemPrompt}`;
+    
     try {
       const response = await axios.post('/api/chat', {
         message,
-        systemPrompt,
+        systemPrompt: enhancedSystemPrompt, // Use the enhanced system prompt
         temperature,
         topP,
         frequencyPenalty,
@@ -143,6 +150,7 @@ const ChatInterface = () => {
         />
         <Button label="Send" icon="pi pi-send" onClick={sendMessage} disabled={loading || !message.trim()} />
         <Button label="Help" icon="pi pi-question-circle" onClick={() => setShowHelp(true)} />
+        <Button label="Reset Chat" icon="pi pi-refresh" onClick={() => setChatHistory([])} className="p-button-secondary" />
       </div>
       {cost && (
         <div className="mb-4">
