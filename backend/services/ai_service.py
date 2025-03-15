@@ -253,8 +253,6 @@ def generate_ai_response_direct(user_message, system_prompt, model="gpt-4", temp
         {"role": "user", "content": user_message}
     ]
     
-    print(f"Sending messages to OpenAI API: {json.dumps(messages, indent=2)}")
-    
     # Call the OpenAI API
     response = client.chat.completions.create(
         model=model,
@@ -267,8 +265,6 @@ def generate_ai_response_direct(user_message, system_prompt, model="gpt-4", temp
     
     # Extract the response text
     response_text = response.choices[0].message.content
-    
-    print(f"Received response from OpenAI API: {response_text[:100]}...")
     
     # Get token usage
     input_tokens = response.usage.prompt_tokens

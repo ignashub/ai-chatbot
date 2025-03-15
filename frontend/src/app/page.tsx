@@ -1,3 +1,5 @@
+'use client';
+
 import ChatInterface from './components/ChatInterface';
 import RemindersPanel from './components/RemindersPanel';
 import NutritionSearch from './components/NutritionSearch';
@@ -6,23 +8,16 @@ import DocumentUploader from './components/DocumentUploader';
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center p-4 md:p-8 lg:p-12">
-      <div className="w-full max-w-5xl">
-        <h1 className="text-3xl font-bold mb-6 text-center">AI Health Assistant</h1>
-        
-        <DocumentUploader />
-        
-        <KnowledgeBase />
-        
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
+      <div className="md:col-span-2">
         <ChatInterface />
-        
-        <footer className="mt-8 text-center text-sm text-gray-500">
-          <p>Powered by OpenAI GPT-4 • Built with Next.js and PrimeReact</p>
-        </footer>
-        <div className="fixed bottom-4 right-4 text-sm text-gray-400 dark:text-gray-500 opacity-70 font-light">
-          Ignas Apsega @ Turing College 2025
-        </div>
       </div>
-    </main>
+      <div className="space-y-4">
+        <RemindersPanel />
+        <NutritionSearch />
+        <KnowledgeBase />
+        <DocumentUploader />
+      </div>
+    </div>
   );
 }

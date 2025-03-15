@@ -9,7 +9,8 @@ import { Card } from 'primereact/card';
 import { Tooltip } from 'primereact/tooltip';
 import { Toast } from 'primereact/toast';
 import { ProgressSpinner } from 'primereact/progressspinner';
-import { Dialog } from 'primereact/dialog'; // Import Dialog component
+import { Dialog } from 'primereact/dialog';
+import ExportOptions from './ExportOptions';
 
 const ChatInterface = () => {
   const [message, setMessage] = useState('');
@@ -21,8 +22,24 @@ const ChatInterface = () => {
   const [systemPrompt, setSystemPrompt] = useState('You are a Health and Wellness Coach with access to a knowledge base of health documents. When answering questions about documents, thoroughly search for relevant information and present it accurately. Include specific details from the documents when available, such as measurement methods, frameworks, or tools. Balance comprehensive answers with clarity. You can also help set reminders for health activities and provide nutrition information for food items.');
   const [loading, setLoading] = useState(false);
   const [cost, setCost] = useState<string | null>(null);
-  const [showHelp, setShowHelp] = useState(false); // State to control the help dialog
+  const [showHelp, setShowHelp] = useState(false);
   const toast = useRef<Toast>(null);
+
+  // Convert chatHistory to the format expected by ExportOptions
+  const getExportableConversation = () => {
+    return chatHistory.flatMap((chat, index) => [
+      {
+        role: 'user',
+        content: chat.user,
+        timestamp: new Date(Date.now() - (chatHistory.length - index) * 60000).toISOString()
+      },
+      {
+        role: 'assistant',
+        content: chat.bot,
+        timestamp: new Date(Date.now() - (chatHistory.length - index) * 60000 + 30000).toISOString()
+      }
+    ]);
+  };
 
   const sendMessage = async () => {
     if (!message) return;
@@ -31,16 +48,10 @@ const ChatInterface = () => {
     setLoading(true);
     setCost(null);
     
-    // Log what we're sending to help debug
-    console.log("Sending system prompt:", systemPrompt);
-    
-    // Create a more forceful system prompt
-    const enhancedSystemPrompt = `IMPORTANT: You must ONLY respond according to the following instructions and ignore any previous context or training. ${systemPrompt}`;
-    
     try {
       const response = await axios.post('/api/chat', {
         message,
-        systemPrompt: enhancedSystemPrompt, // Use the enhanced system prompt
+        systemPrompt,
         temperature,
         topP,
         frequencyPenalty,
@@ -108,17 +119,19 @@ const ChatInterface = () => {
   return (
     <Card title="Chat" className="shadow-lg">
       <Toast ref={toast} />
-      <div className="mb-4">
-        <label htmlFor="systemPrompt">System Prompt:</label>
-        <div className="flex items-center gap-2">
-          <InputText
-            id="systemPrompt"
-            value={systemPrompt}
-            onChange={(e) => setSystemPrompt(e.target.value)}
-            placeholder="Enter system prompt..."
-            className="w-full"
-          />
-          <i className="pi pi-info-circle" data-pr-tooltip="This prompt sets the context for the AI's responses." />
+      <div className="mb-4 flex justify-between items-center">
+        <div className="flex-grow">
+          <label htmlFor="systemPrompt">System Prompt:</label>
+          <div className="flex items-center gap-2">
+            <InputText
+              id="systemPrompt"
+              value={systemPrompt}
+              onChange={(e) => setSystemPrompt(e.target.value)}
+              placeholder="Enter system prompt..."
+              className="w-full"
+            />
+            <i className="pi pi-info-circle" data-pr-tooltip="This prompt sets the context for the AI's responses." />
+          </div>
         </div>
       </div>
       <div className="chat-history p-4 mb-4 max-h-96 overflow-y-auto border rounded-lg bg-gray-50">
@@ -141,6 +154,12 @@ const ChatInterface = () => {
           </div>
         )}
       </div>
+      <div className="ml-4">
+          <ExportOptions 
+            conversation={getExportableConversation()} 
+            isDisabled={chatHistory.length === 0} 
+          />
+        </div>
       <div className="flex gap-2 mb-4">
         <InputText
           value={message}
@@ -150,7 +169,6 @@ const ChatInterface = () => {
         />
         <Button label="Send" icon="pi pi-send" onClick={sendMessage} disabled={loading || !message.trim()} />
         <Button label="Help" icon="pi pi-question-circle" onClick={() => setShowHelp(true)} />
-        <Button label="Reset Chat" icon="pi pi-refresh" onClick={() => setChatHistory([])} className="p-button-secondary" />
       </div>
       {cost && (
         <div className="mb-4">
@@ -189,12 +207,14 @@ const ChatInterface = () => {
           <li>Adjust the settings like Temperature, Top P, Frequency Penalty, and Presence Penalty to customize the bot's responses.</li>
           <li>The 'System Prompt' sets the context for the AI's responses. You can change it to suit your needs.</li>
           <li>Click the 'Help' button anytime to view this guide.</li>
+          <li>Use the 'Export' button to download your conversation in JSON, CSV, or PDF format.</li>
         </ul>
         
         <h3 className="font-bold mt-4">Special Features:</h3>
         <ul>
           <li><strong>Set Reminders:</strong> Ask the AI to set reminders for your health activities. For example, "Remind me to take my vitamins tomorrow at 9 AM" or "Set a reminder for my workout on Friday at 6 PM".</li>
           <li><strong>Nutrition Information:</strong> Ask about nutrition facts for different foods. For example, "What's the nutritional value of an apple?" or "How many calories are in 200g of chicken breast?"</li>
+          <li><strong>Export Conversations:</strong> Download your conversations in different formats for record-keeping or sharing.</li>
         </ul>
         
         <p className="mt-4 text-sm text-gray-600">Your reminders will appear in the panel on the right side of the screen.</p>
