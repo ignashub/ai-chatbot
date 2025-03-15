@@ -21,32 +21,62 @@ The application uses OpenAI's GPT models via LangChain, with a Next.js frontend 
 
 ## Getting Started
 
-For detailed setup instructions, please refer to:
-- [Frontend README](/frontend/README.md) - Contains Next.js setup instructions
-- Backend README - Contains Flask server setup instructions
+### Prerequisites
 
-### Quick Start
+- Node.js (v16 or higher)
+- Python (v3.8 or higher)
+- OpenAI API Key
 
-1. Clone the repository
-2. Set up the backend:
-   ```bash
-   cd backend
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   pip install -r requirements.txt
-   # Create .env with OPENAI_API_KEY
-   python app.py
-   ```
+### Setup and Installation
 
-3. Set up the frontend:
-   ```bash
-   cd frontend
-   npm install
-   # Create .env.local with NEXT_PUBLIC_API_URL=http://127.0.0.1:5000
-   npm run dev
-   ```
+1. **Clone the repository**
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
+```bash
+git clone https://github.com/ignashub/ai-chatbot.git
+cd ai-chatbot
+```
+
+2. **Backend Setup**
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+3. **Create a `.env` file in the backend directory with your OpenAI API key**
+
+```
+OPENAI_API_KEY=your_api_key_here
+```
+
+4. **Start the backend server**
+
+```bash
+python app.py
+```
+
+5. **Frontend Setup**
+
+```bash
+cd ../frontend
+npm install
+```
+
+6. **Create a `.env.local` file in the frontend directory**
+
+```
+NEXT_PUBLIC_API_URL=http://127.0.0.1:5000
+```
+
+7. **Start the frontend development server**
+
+```bash
+npm run dev
+```
+
+8. **Open [http://localhost:3000](http://localhost:3000) with your browser to see the application**
 
 ## Recommended Documents
 
