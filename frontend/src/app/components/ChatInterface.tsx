@@ -297,11 +297,11 @@ If you cannot find information in the knowledge base, clearly state that you don
 
       {/* Help Dialog */}
       <Dialog header="How to Use the Chatbot" visible={showHelp} style={{ width: '50vw' }} onHide={() => setShowHelp(false)}>
-        <p>Welcome to your personal AI Health & Wellness Coach! Here's how you can use this application:</p>
+        <p>Welcome to your personal AI Health & Wellness Coach! This application is specifically designed to focus on health and wellness topics, providing you with personalized guidance and information.</p>
         <ul>
           <li>Enter your message in the input field and click 'Send' to interact with the bot.</li>
           <li>Adjust the settings like Temperature, Top P, Frequency Penalty, and Presence Penalty to customize the bot's responses.</li>
-          <li>The 'System Prompt' sets the context for the AI's responses. You can change it to suit your needs.</li>
+          <li>The 'System Prompt' sets the context for the AI's responses. While the default prompt is optimized for health and wellness topics, you can modify it to better suit your specific needs.</li>
           <li>Click the 'Help' button anytime to view this guide.</li>
           <li>Use the 'Export' button to download your conversation in JSON, CSV, or PDF format.</li>
         </ul>
@@ -314,7 +314,38 @@ If you cannot find information in the knowledge base, clearly state that you don
           <li><strong>Export Conversations:</strong> Download your conversations in different formats for record-keeping or sharing.</li>
         </ul>
         
+        <h3 className="font-bold mt-4">Recommended Documents:</h3>
+        <p className="text-sm">This application works best with the following documents uploaded to the knowledge base:</p>
+        <ul className="text-sm list-disc list-inside mt-2">
+          <li>
+            <a 
+              href="https://www.cdc.gov/training-publichealth101/media/pdfs/introduction-to-public-health.pdf" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Introduction to Public Health (CDC)
+            </a>
+          </li>
+          <li>
+            <a 
+              href="https://www.gfmer.ch/GFMER_members/pdf/Concept-health-Rai-2016.pdf" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Concept of Health (Rai, 2016)
+            </a>
+          </li>
+        </ul>
+        <p className="text-sm mt-2">You can download these documents using the links above and upload them to the knowledge base for optimal performance.</p>
+        
         <p className="mt-4 text-sm text-gray-600">Your reminders will appear in the panel on the right side of the screen.</p>
+        
+        <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+          <p className="text-blue-800 font-semibold">About This Application</p>
+          <p className="text-sm text-blue-700">This application has been specifically designed and optimized for health and wellness topics. While you can customize the system prompt to explore different areas, the core functionality and knowledge base are focused on providing health and wellness guidance.</p>
+        </div>
       </Dialog>
     </Card>
   );
