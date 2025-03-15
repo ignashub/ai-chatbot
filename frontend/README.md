@@ -1,43 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Health & Wellness AI Chatbot
+
+This project is a specialized AI chatbot focused on health and wellness topics. It provides personalized guidance, nutrition information, and allows users to set reminders for health activities.
+
+## Features
+
+- **Knowledge Base Search**: Ask questions about health documents in the knowledge base
+- **Reminder Setting**: Set reminders for health activities
+- **Nutrition Information**: Get nutrition facts for food items
+- **Customizable AI Parameters**: Adjust temperature, top-p, frequency penalty, and presence penalty
+- **Export Conversations**: Download conversations in JSON, CSV, or PDF formats
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js (v16 or higher)
+- Python (v3.8 or higher)
+- OpenAI API Key
+
+### Setup and Installation
+
+1. **Clone the repository**
+
+```bash
+git clone <repository-url>
+cd ai-chatbot
+```
+
+2. **Backend Setup**
+
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+```
+
+3. **Create a `.env` file in the backend directory with your OpenAI API key**
+
+```
+OPENAI_API_KEY=your_api_key_here
+```
+
+4. **Start the backend server**
+
+```bash
+python app.py
+```
+
+5. **Frontend Setup**
+
+```bash
+cd ../frontend
+npm install
+```
+
+6. **Create a `.env.local` file in the frontend directory**
+
+```
+NEXT_PUBLIC_API_URL=http://127.0.0.1:5000
+```
+
+7. **Start the frontend development server**
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+8. **Open [http://localhost:3000](http://localhost:3000) with your browser to see the application**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Recommended Documents
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+For optimal performance with the knowledge base, download and upload these documents:
 
-## Learn More
+- [Introduction to Public Health (CDC)](https://www.cdc.gov/training-publichealth101/media/pdfs/introduction-to-public-health.pdf)
+- [Concept of Health (Rai, 2016)](https://www.gfmer.ch/GFMER_members/pdf/Concept-health-Rai-2016.pdf)
 
-To learn more about Next.js, take a look at the following resources:
+## Project Task Requirements
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-
-the task:
-
-Task Requirements
 The exact task requirements are as follows:
 
 Figure out how your chatbot will work.
