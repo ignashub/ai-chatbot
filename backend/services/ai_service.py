@@ -94,7 +94,7 @@ def generate_ai_response(user_message, system_prompt=None, model="gpt-4", temper
         return f"I'm sorry, I encountered an error: {str(e)}", 0, 0, 0.0
 
 def generate_ai_response_with_function_calling(user_message, system_prompt, model="gpt-4", temperature=0.7, 
-                         top_p=1.0, frequency_penalty=0.0, presence_penalty=0.0):
+                         top_p=1.0, frequency_penalty=0.0, presence_penalty=0.0, tools=None):
     """
     Generate a response from the AI model with function calling support and RAG.
     
@@ -106,6 +106,7 @@ def generate_ai_response_with_function_calling(user_message, system_prompt, mode
         top_p (float): Controls diversity (default: 1.0)
         frequency_penalty (float): Penalizes repeated tokens (default: 0.0)
         presence_penalty (float): Encourages new topics (default: 0.0)
+        tools (list): List of tool definitions for function calling
         
     Returns:
         tuple: (response_text, input_tokens, output_tokens, estimated_cost)
@@ -153,7 +154,7 @@ def generate_ai_response_with_function_calling(user_message, system_prompt, mode
         top_p=top_p,
         frequency_penalty=frequency_penalty,
         presence_penalty=presence_penalty,
-        tools=function_definitions,
+        tools=tools,
         tool_choice="auto"
     )
     
@@ -222,7 +223,7 @@ def generate_ai_response_with_function_calling(user_message, system_prompt, mode
     # Calculate cost
     estimated_cost = calculate_cost(input_tokens, output_tokens, model)
     
-    return response_text, input_tokens, output_tokens, estimated_cost 
+    return response_text, input_tokens, output_tokens, estimated_cost
 
 def generate_ai_response_direct(user_message, system_prompt, model="gpt-4", temperature=0.7, 
                          top_p=1.0, frequency_penalty=0.0, presence_penalty=0.0):

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { InputText } from 'primereact/inputtext';
 import { Button } from 'primereact/button';
@@ -28,13 +28,33 @@ When users ask about specific documents or topics in the knowledge base:
 4. Include specific details from the documents when available, such as measurement methods, frameworks, or tools
 5. If you find information in the knowledge base, include "Sources: [document name]" at the end of your response
 
-If you cannot find information in the knowledge base, clearly state that you don't have that specific document or information, but still try to provide helpful general information on the topic.
+You can also help set reminders for health activities. When a user asks to set a reminder:
+1. Extract the title, date, and time from their request
+2. Use the set_reminder function to create the reminder
+3. Confirm the reminder has been set
 
-You can also help set reminders for health activities and provide nutrition information for food items.`);
+You can also provide nutrition information for food items.
+
+If you cannot find information in the knowledge base, clearly state that you don't have that specific document or information, but still try to provide helpful general information on the topic.`);
   const [loading, setLoading] = useState(false);
   const [cost, setCost] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
+  const [documents, setDocuments] = useState<any[]>([]);
   const toast = useRef<Toast>(null);
+
+  // Fetch available documents on component mount
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      try {
+        const response = await axios.get('/api/documents');
+        setDocuments(response.data.documents || []);
+      } catch (error) {
+        console.error('Error fetching documents:', error);
+      }
+    };
+    
+    fetchDocuments();
+  }, []);
 
   // Convert chatHistory to the format expected by ExportOptions
   const getExportableConversation = () => {
@@ -63,10 +83,16 @@ You can also help set reminders for health activities and provide nutrition info
       // Check if the message is asking about a document
       const isDocumentQuery = /knowledge\s*base|document|pdf|file|uploaded|Concept-health-Rai-2016|tell\s*me\s*about/i.test(message);
       
+      // Check if this is a reminder request
+      const isReminderRequest = /remind me|set a reminder|create a reminder/i.test(message);
+      
       // If it's a document query, add a special instruction to search the knowledge base
       const enhancedMessage = isDocumentQuery 
         ? `[SEARCH_KNOWLEDGE_BASE] ${message}` 
         : message;
+      
+      console.log('Sending message to API:', enhancedMessage);
+      console.log('Is reminder request:', isReminderRequest);
       
       const response = await axios.post('/api/chat', {
         message: enhancedMessage,
@@ -75,10 +101,27 @@ You can also help set reminders for health activities and provide nutrition info
         topP,
         frequencyPenalty,
         presencePenalty,
+        isReminderRequest: isReminderRequest
       });
+      
       const botMessage = response.data.response;
       const promptCost = response.data.estimated_cost;
       setCost(promptCost);
+
+      // If this was a reminder request, refresh the reminders panel
+      if (isReminderRequest && botMessage.toLowerCase().includes('reminder set')) {
+        // Trigger a refresh of the reminders panel
+        const reminderSetEvent = new CustomEvent('reminderSet');
+        window.dispatchEvent(reminderSetEvent);
+        
+        // Show a success toast
+        toast.current?.show({
+          severity: 'success',
+          summary: 'Reminder Set',
+          detail: 'Your reminder has been created successfully',
+          life: 3000
+        });
+      }
 
       let index = 0;
       const typingInterval = setInterval(() => {
@@ -135,6 +178,25 @@ You can also help set reminders for health activities and provide nutrition info
     return message;
   };
 
+  // Generate document suggestions based on available documents
+  const getDocumentSuggestions = () => {
+    if (!documents || documents.length === 0) return null;
+    
+    return (
+      <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+        <h4 className="text-sm font-semibold text-blue-800">Available Documents:</h4>
+        <ul className="mt-1 text-xs text-blue-700">
+          {documents.slice(0, 3).map((doc, index) => (
+            <li key={index} className="cursor-pointer hover:underline" 
+                onClick={() => setMessage(`Tell me about ${doc.title} from the knowledge base`)}>
+              {doc.title}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+
   return (
     <Card title="Health & Wellness AI Assistant" className="shadow-lg">
       <Toast ref={toast} />
@@ -165,6 +227,7 @@ You can also help set reminders for health activities and provide nutrition info
               <li>"What does the document Concept-health-Rai-2016.pdf say about health?"</li>
               <li>"Remind me to drink water every 2 hours"</li>
             </ul>
+            {getDocumentSuggestions()}
           </div>
         )}
         {chatHistory.map((chat, index) => (
@@ -198,6 +261,7 @@ You can also help set reminders for health activities and provide nutrition info
           onChange={(e) => setMessage(e.target.value)}
           placeholder="Ask about health topics or search our knowledge base..."
           className="w-full"
+          onKeyPress={(e) => e.key === 'Enter' && sendMessage()}
         />
         <Button label="Send" icon="pi pi-send" onClick={sendMessage} disabled={loading || !message.trim()} />
         <Button label="Help" icon="pi pi-question-circle" onClick={() => setShowHelp(true)} />

@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
+interface DocumentResult {
+  title: string;
+  content: string;
+  source: string;
+  page?: string | number;
+  score?: number;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -32,8 +40,8 @@ export async function POST(request: NextRequest) {
           documentContext = "Here is information from the documents you asked about:\n\n";
           
           // Group results by document title
-          const docsByTitle = {};
-          for (const doc of searchResults) {
+          const docsByTitle: Record<string, DocumentResult[]> = {};
+          for (const doc of searchResults as DocumentResult[]) {
             const title = doc.title || 'Unknown';
             if (!docsByTitle[title]) {
               docsByTitle[title] = [];
@@ -62,19 +70,25 @@ export async function POST(request: NextRequest) {
       }
     }
     
+    // Check if this is a reminder request
+    const isReminderRequest = /remind me|set a reminder|create a reminder/i.test(message);
+    
     // Prepare the message for the AI
     const enhancedMessage = documentContext 
       ? `${documentContext}\n\nUser query: ${message.replace('[SEARCH_KNOWLEDGE_BASE]', '')}`
       : message;
     
     // Send the message to the backend
+    console.log(`Sending message to backend: ${process.env.NEXT_PUBLIC_API_URL}/api/chat/message`);
     const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/chat/message`, {
       message: enhancedMessage,
       systemPrompt,
       temperature,
       topP,
       frequencyPenalty,
-      presencePenalty
+      presencePenalty,
+      // Add a flag for reminder requests to ensure they're handled properly
+      isReminderRequest: isReminderRequest
     });
 
     return NextResponse.json(response.data);

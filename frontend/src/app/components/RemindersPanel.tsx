@@ -24,7 +24,9 @@ const RemindersPanel = () => {
     setLoading(true);
     setError(null);
     try {
+      console.log('Fetching reminders...');
       const response = await axios.get('/api/reminders');
+      console.log('Reminders response:', response.data);
       setReminders(response.data);
     } catch (error) {
       console.error('Error fetching reminders:', error);
@@ -37,9 +39,21 @@ const RemindersPanel = () => {
   useEffect(() => {
     fetchReminders();
     
-    // Remove the polling interval to stop constant API calls
-    // const intervalId = setInterval(fetchReminders, 30000);
-    // return () => clearInterval(intervalId);
+    // Set up a refresh interval (every 60 seconds)
+    const intervalId = setInterval(fetchReminders, 60000);
+    
+    // Listen for reminder set events
+    const handleReminderSet = () => {
+      console.log('Reminder set event detected, refreshing reminders');
+      fetchReminders();
+    };
+    
+    window.addEventListener('reminderSet', handleReminderSet);
+    
+    return () => {
+      clearInterval(intervalId);
+      window.removeEventListener('reminderSet', handleReminderSet);
+    };
   }, []);
 
   const formatDateTime = (isoString: string) => {
