@@ -1,10 +1,15 @@
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, jsonify, request, send_file, make_response
 import json
 import csv
 import io
 from fpdf import FPDF
 import os
+import sys
 from datetime import datetime
+from io import BytesIO
+
+# Add the parent directory to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 export_bp = Blueprint('export', __name__)
 
@@ -69,38 +74,62 @@ def export_csv(conversation, filename):
     )
 
 def export_pdf(conversation, filename):
-    """Export conversation as PDF file"""
+    """
+    Export conversation to PDF
+    """
     pdf = FPDF()
     pdf.add_page()
     
-    # Set font
-    pdf.set_font("Arial", size=12)
-    
-    # Add title
-    pdf.cell(200, 10, txt="Conversation Export", ln=True, align='C')
+    # Set up fonts
+    pdf.set_font("Arial", "B", 16)
+    pdf.cell(0, 10, "Conversation Export", ln=True, align="C")
     pdf.ln(10)
     
-    # Add conversation content
+    # Add timestamp
+    pdf.set_font("Arial", "I", 10)
+    pdf.cell(0, 10, f"Generated on: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", ln=True)
+    pdf.ln(10)
+    
+    # Add conversation
+    pdf.set_font("Arial", "", 12)
+    
     for message in conversation:
-        role = message.get('role', '')
-        content = message.get('content', '')
-        timestamp = message.get('timestamp', '')
+        # Add role as header
+        role = message.get("role", "unknown").capitalize()
+        pdf.set_font("Arial", "B", 12)
+        pdf.cell(0, 10, f"{role}:", ln=True)
         
-        pdf.set_font("Arial", 'B', 12)
-        pdf.cell(200, 10, txt=f"{role.capitalize()} ({timestamp})", ln=True)
+        # Add content with word wrapping
+        pdf.set_font("Arial", "", 12)
+        content = message.get("content", "")
         
-        pdf.set_font("Arial", size=10)
-        # Handle multi-line content
-        pdf.multi_cell(0, 10, txt=content)
+        # Simple word wrapping
+        words = content.split()
+        line = ""
+        for word in words:
+            test_line = line + " " + word if line else word
+            if pdf.get_string_width(test_line) > pdf.w - 20:  # 20 is margin
+                pdf.multi_cell(0, 10, line)
+                line = word
+            else:
+                line = test_line
+        
+        if line:
+            pdf.multi_cell(0, 10, line)
+        
         pdf.ln(5)
     
-    memory_file = io.BytesIO()
-    pdf.output(memory_file)
+    # Create BytesIO object
+    memory_file = BytesIO()
+    
+    # Save PDF to BytesIO object
+    pdf.output(dest='S').encode('latin-1')
+    memory_file.write(pdf.output(dest='S').encode('latin-1'))
     memory_file.seek(0)
     
-    return send_file(
-        memory_file,
-        as_attachment=True,
-        download_name=f"{filename}.pdf",
-        mimetype='application/pdf'
-    ) 
+    # Create response
+    response = make_response(memory_file.getvalue())
+    response.headers.set('Content-Type', 'application/pdf')
+    response.headers.set('Content-Disposition', f'attachment; filename={filename}')
+    
+    return response 

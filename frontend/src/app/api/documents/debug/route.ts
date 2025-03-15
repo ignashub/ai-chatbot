@@ -8,13 +8,13 @@ import axios from 'axios';
  */
 export async function GET() {
   try {
-    const response = await axios.get('http://127.0.0.1:5000/documents/debug');
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/documents/debug`);
     return NextResponse.json(response.data);
   } catch (error: any) {
-    console.error('Error fetching debug info:', error);
+    console.error('Error fetching document debug info:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch debug information' },
-      { status: error.response?.status || 500 }
+      { error: error.message || 'Failed to fetch document debug info' },
+      { status: 500 }
     );
   }
 } 

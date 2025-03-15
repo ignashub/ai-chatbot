@@ -37,78 +37,53 @@ export async function POST(request: NextRequest) {
     
     // Send to backend with a much longer timeout for large files
     try {
-      const response = await axios.post('http://127.0.0.1:5000/documents/file', backendFormData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        },
-        // Increase timeout to 5 minutes for large files
-        timeout: 300000,
-        // Add progress tracking
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
-          console.log(`Upload progress: ${percentCompleted}%`);
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/documents/file`, 
+        backendFormData, 
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          // Increase timeout to 5 minutes for large files
+          timeout: 300000,
+          // Add progress tracking
+          onUploadProgress: (progressEvent) => {
+            const percentCompleted = Math.round((progressEvent.loaded * 100) / (progressEvent.total || 1));
+            console.log(`Upload progress: ${percentCompleted}%`);
+          }
         }
-      });
+      );
       
       // Clean up temporary file
       try {
         fs.unlinkSync(tempFilePath);
-        console.log(`Temporary file removed: ${tempFilePath}`);
+        console.log(`Temporary file deleted: ${tempFilePath}`);
       } catch (cleanupError) {
-        console.error(`Error removing temporary file: ${cleanupError}`);
+        console.error(`Error cleaning up temporary file: ${cleanupError}`);
       }
       
       return NextResponse.json(response.data);
-    } catch (error: any) {
-      console.error('Error in file upload API route:', error);
+    } catch (uploadError: any) {
+      console.error('Error uploading file to backend:', uploadError);
       
-      // Clean up temporary file
+      // Clean up temporary file even if upload failed
       try {
         fs.unlinkSync(tempFilePath);
-        console.log(`Temporary file removed: ${tempFilePath}`);
+        console.log(`Temporary file deleted after upload error: ${tempFilePath}`);
       } catch (cleanupError) {
-        console.error(`Error removing temporary file: ${cleanupError}`);
+        console.error(`Error cleaning up temporary file: ${cleanupError}`);
       }
       
-      // Handle different error types
-      if (error.code === 'ECONNABORTED') {
-        console.error('Request timed out');
-        return NextResponse.json(
-          { 
-            error: 'Request timed out. The file may be too large or the server is busy.',
-            logs: [{ 
-              timestamp: new Date().toISOString(),
-              message: 'Processing timed out. The document may still be processing in the background. Please check the documents list in a few minutes.'
-            }]
-          }, 
-          { status: 504 }
-        );
-      }
-      
-      if (error.response) {
-        // The server responded with an error status
-        console.error('Server error response:', error.response.data);
-        return NextResponse.json(error.response.data, { status: error.response.status });
-      } else if (error.request) {
-        // No response received
-        console.error('No response received from backend:', error.request);
-        return NextResponse.json(
-          { 
-            error: 'No response received from the server. The server may be overloaded.',
-            logs: [{ 
-              timestamp: new Date().toISOString(),
-              message: 'Server did not respond. The document may still be processing in the background. Please check the documents list in a few minutes.'
-            }]
-          }, 
-          { status: 503 }
-        );
-      } else {
-        // Error setting up the request
-        return NextResponse.json({ error: error.message }, { status: 500 });
-      }
+      return NextResponse.json(
+        { error: uploadError.response?.data?.error || 'Failed to upload file to backend' },
+        { status: uploadError.response?.status || 500 }
+      );
     }
   } catch (error: any) {
     console.error('Error processing file upload:', error);
-    return NextResponse.json({ error: 'Error processing file upload' }, { status: 500 });
+    return NextResponse.json(
+      { error: error.message || 'Failed to process file upload' },
+      { status: 500 }
+    );
   }
-} 
+}

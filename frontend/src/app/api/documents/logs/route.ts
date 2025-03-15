@@ -3,13 +3,13 @@ import axios from 'axios';
 
 export async function GET() {
   try {
-    const response = await axios.get('http://127.0.0.1:5000/documents/logs');
+    const response = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/api/documents/logs`);
     return NextResponse.json(response.data);
   } catch (error: any) {
-    console.error('Error fetching document logs:', error);
+    console.error('Error fetching document processing logs:', error);
     return NextResponse.json(
-      { error: error.response?.data?.error || 'Failed to fetch document logs' },
-      { status: error.response?.status || 500 }
+      { error: error.message || 'Failed to fetch document processing logs' },
+      { status: 500 }
     );
   }
 } 

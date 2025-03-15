@@ -117,7 +117,7 @@ const ChatInterface = () => {
   };
 
   return (
-    <Card title="Chat" className="shadow-lg">
+    <Card title="Health & Wellness AI Assistant" className="shadow-lg">
       <Toast ref={toast} />
       <div className="mb-4 flex justify-between items-center">
         <div className="flex-grow">
@@ -135,6 +135,19 @@ const ChatInterface = () => {
         </div>
       </div>
       <div className="chat-history p-4 mb-4 max-h-96 overflow-y-auto border rounded-lg bg-gray-50">
+        {chatHistory.length === 0 && (
+          <div className="text-center p-4 text-gray-500">
+            <p className="mb-2 font-semibold">Welcome to your Health & Wellness AI Assistant!</p>
+            <p>You can ask me questions about health topics, nutrition information, or search our knowledge base.</p>
+            <p className="mt-2 text-sm">Try asking:</p>
+            <ul className="text-sm list-disc list-inside mt-1">
+              <li>"What are the benefits of regular exercise?"</li>
+              <li>"Tell me about positive health from our knowledge base"</li>
+              <li>"What's the nutritional value of an apple?"</li>
+              <li>"Remind me to drink water every 2 hours"</li>
+            </ul>
+          </div>
+        )}
         {chatHistory.map((chat, index) => (
           <div key={index} className="mb-4">
             <div className="bg-blue-100 p-3 rounded-lg inline-block max-w-[80%] float-right clear-both">
@@ -164,7 +177,7 @@ const ChatInterface = () => {
         <InputText
           value={message}
           onChange={(e) => setMessage(e.target.value)}
-          placeholder="Type your message..."
+          placeholder="Ask about health topics or search our knowledge base..."
           className="w-full"
         />
         <Button label="Send" icon="pi pi-send" onClick={sendMessage} disabled={loading || !message.trim()} />
@@ -212,6 +225,7 @@ const ChatInterface = () => {
         
         <h3 className="font-bold mt-4">Special Features:</h3>
         <ul>
+          <li><strong>Knowledge Base Search:</strong> Ask questions about health topics in our knowledge base. For example, "What does our knowledge base say about positive health?" or "Find information about exercise benefits in our documents."</li>
           <li><strong>Set Reminders:</strong> Ask the AI to set reminders for your health activities. For example, "Remind me to take my vitamins tomorrow at 9 AM" or "Set a reminder for my workout on Friday at 6 PM".</li>
           <li><strong>Nutrition Information:</strong> Ask about nutrition facts for different foods. For example, "What's the nutritional value of an apple?" or "How many calories are in 200g of chicken breast?"</li>
           <li><strong>Export Conversations:</strong> Download your conversations in different formats for record-keeping or sharing.</li>

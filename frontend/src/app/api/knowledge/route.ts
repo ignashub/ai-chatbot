@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       );
     }
     
-    const response = await axios.post('http://127.0.0.1:5000/knowledge', { query });
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/knowledge`, { query });
     return NextResponse.json(response.data);
   } catch (error: any) {
     console.error('Error searching knowledge base:', error);
