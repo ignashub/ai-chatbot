@@ -1,38 +1,89 @@
 import { NextRequest, NextResponse } from 'next/server';
 import axios from 'axios';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const { message, systemPrompt, isDocumentQuery, temperature, topP, frequencyPenalty, presencePenalty } = await request.json();
+    const body = await request.json();
+    const { message, systemPrompt, temperature, topP, frequencyPenalty, presencePenalty } = body;
+
+    // Check if this is a knowledge base query
+    const isKnowledgeBaseQuery = message.includes('[SEARCH_KNOWLEDGE_BASE]');
     
-    console.log(`Processing ${isDocumentQuery ? 'document' : 'regular'} query: ${message.substring(0, 50)}${message.length > 50 ? '...' : ''}`);
+    // If it's a knowledge base query, first search the knowledge base
+    let documentContext = '';
+    if (isKnowledgeBaseQuery) {
+      console.log('Knowledge base query detected, searching documents first');
+      
+      try {
+        // Extract the actual query (remove the special tag)
+        const actualQuery = message.replace('[SEARCH_KNOWLEDGE_BASE]', '').trim();
+        
+        // Search the knowledge base
+        const searchResponse = await axios.post(
+          `${process.env.NEXT_PUBLIC_API_URL}/api/documents/search`,
+          { query: actualQuery }
+        );
+        
+        const searchResults = searchResponse.data.results || [];
+        console.log(`Found ${searchResults.length} documents for query: ${actualQuery}`);
+        
+        if (searchResults.length > 0) {
+          // Format the document context
+          documentContext = "Here is information from the documents you asked about:\n\n";
+          
+          // Group results by document title
+          const docsByTitle = {};
+          for (const doc of searchResults) {
+            const title = doc.title || 'Unknown';
+            if (!docsByTitle[title]) {
+              docsByTitle[title] = [];
+            }
+            docsByTitle[title].push(doc);
+          }
+          
+          // Add content from each document
+          for (const [title, docs] of Object.entries(docsByTitle)) {
+            documentContext += `--- From document: ${title} ---\n\n`;
+            
+            // Combine content from all chunks
+            let combinedContent = "";
+            for (const doc of docs) {
+              combinedContent += `${doc.content}\n\n`;
+            }
+            
+            documentContext += combinedContent;
+          }
+          
+          console.log(`Added document context (${documentContext.length} chars)`);
+        }
+      } catch (searchError) {
+        console.error('Error searching knowledge base:', searchError);
+        // Continue with the original message if search fails
+      }
+    }
     
-    // Send request to backend chat endpoint
-    const chatResponse = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/chat/message`, {
-      message,
-      systemPrompt: isDocumentQuery 
-        ? `${systemPrompt || "You are a Health and Wellness Coach."} When answering questions about documents, provide comprehensive and detailed responses based on the information in the context. Include all relevant details, examples, tools, methods, and frameworks mentioned in the document. Pay special attention to sections marked as 'RELEVANT SECTION' as they directly relate to the user's query. Be thorough and specific, ensuring you don't omit any important information from the document.`
-        : systemPrompt,
+    // Prepare the message for the AI
+    const enhancedMessage = documentContext 
+      ? `${documentContext}\n\nUser query: ${message.replace('[SEARCH_KNOWLEDGE_BASE]', '')}`
+      : message;
+    
+    // Send the message to the backend
+    const response = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/chat/message`, {
+      message: enhancedMessage,
+      systemPrompt,
       temperature,
       topP,
       frequencyPenalty,
       presencePenalty
-    }, {
-      timeout: 120000 // 2 minute timeout
     });
-    
-    return NextResponse.json(chatResponse.data);
+
+    return NextResponse.json(response.data);
   } catch (error: any) {
-    console.error('Error in chat API route:', error);
-    
-    // Log more detailed error information
-    if (error.response) {
-      console.error('Error response data:', error.response.data);
-    }
+    console.error('Error in chat API:', error);
     
     return NextResponse.json(
-      { error: error.message || 'An error occurred processing your request' },
-      { status: 500 }
+      { error: error.response?.data?.error || error.message || 'An error occurred' },
+      { status: error.response?.status || 500 }
     );
   }
 } 

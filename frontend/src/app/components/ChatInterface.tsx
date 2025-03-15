@@ -19,7 +19,18 @@ const ChatInterface = () => {
   const [topP, setTopP] = useState(1.0);
   const [frequencyPenalty, setFrequencyPenalty] = useState(0.0);
   const [presencePenalty, setPresencePenalty] = useState(0.0);
-  const [systemPrompt, setSystemPrompt] = useState('You are a Health and Wellness Coach with access to a knowledge base of health documents. When answering questions about documents, thoroughly search for relevant information and present it accurately. Include specific details from the documents when available, such as measurement methods, frameworks, or tools. Balance comprehensive answers with clarity. You can also help set reminders for health activities and provide nutrition information for food items.');
+  const [systemPrompt, setSystemPrompt] = useState(`You are a Health and Wellness Coach with access to a knowledge base of health documents. 
+
+When users ask about specific documents or topics in the knowledge base:
+1. Always search the knowledge base for relevant information
+2. If a user mentions a specific document (e.g., "Concept-health-Rai-2016.pdf"), search for and retrieve information from that document
+3. Present information accurately, citing the source document
+4. Include specific details from the documents when available, such as measurement methods, frameworks, or tools
+5. If you find information in the knowledge base, include "Sources: [document name]" at the end of your response
+
+If you cannot find information in the knowledge base, clearly state that you don't have that specific document or information, but still try to provide helpful general information on the topic.
+
+You can also help set reminders for health activities and provide nutrition information for food items.`);
   const [loading, setLoading] = useState(false);
   const [cost, setCost] = useState<string | null>(null);
   const [showHelp, setShowHelp] = useState(false);
@@ -49,8 +60,16 @@ const ChatInterface = () => {
     setCost(null);
     
     try {
+      // Check if the message is asking about a document
+      const isDocumentQuery = /knowledge\s*base|document|pdf|file|uploaded|Concept-health-Rai-2016|tell\s*me\s*about/i.test(message);
+      
+      // If it's a document query, add a special instruction to search the knowledge base
+      const enhancedMessage = isDocumentQuery 
+        ? `[SEARCH_KNOWLEDGE_BASE] ${message}` 
+        : message;
+      
       const response = await axios.post('/api/chat', {
-        message,
+        message: enhancedMessage,
         systemPrompt,
         temperature,
         topP,
@@ -143,7 +162,7 @@ const ChatInterface = () => {
             <ul className="text-sm list-disc list-inside mt-1">
               <li>"What are the benefits of regular exercise?"</li>
               <li>"Tell me about positive health from our knowledge base"</li>
-              <li>"What's the nutritional value of an apple?"</li>
+              <li>"What does the document Concept-health-Rai-2016.pdf say about health?"</li>
               <li>"Remind me to drink water every 2 hours"</li>
             </ul>
           </div>
@@ -225,7 +244,7 @@ const ChatInterface = () => {
         
         <h3 className="font-bold mt-4">Special Features:</h3>
         <ul>
-          <li><strong>Knowledge Base Search:</strong> Ask questions about health topics in our knowledge base. For example, "What does our knowledge base say about positive health?" or "Find information about exercise benefits in our documents."</li>
+          <li><strong>Knowledge Base Search:</strong> Ask questions about health topics in our knowledge base. For example, "What does our knowledge base say about positive health?" or "Tell me about the document Concept-health-Rai-2016.pdf"</li>
           <li><strong>Set Reminders:</strong> Ask the AI to set reminders for your health activities. For example, "Remind me to take my vitamins tomorrow at 9 AM" or "Set a reminder for my workout on Friday at 6 PM".</li>
           <li><strong>Nutrition Information:</strong> Ask about nutrition facts for different foods. For example, "What's the nutritional value of an apple?" or "How many calories are in 200g of chicken breast?"</li>
           <li><strong>Export Conversations:</strong> Download your conversations in different formats for record-keeping or sharing.</li>

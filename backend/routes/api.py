@@ -644,8 +644,8 @@ def delete_document(doc_id):
         print(f"Error deleting document: {str(e)}")
         return jsonify({'error': f'Error deleting document: {str(e)}'}), 500
 
-@api_bp.route('/search', methods=['POST'])
-def search():
+@api_bp.route('/documents/search', methods=['POST'])
+def search_documents():
     """
     Search for documents in the knowledge base.
     
@@ -655,10 +655,11 @@ def search():
     try:
         data = request.json
         query = data.get('query', '')
-        top_k = data.get('top_k', 4)  # Default to 4 documents
         
         if not query:
             return jsonify({'error': 'Query is required'}), 400
+        
+        print(f"Document search request received: {query}")
         
         # Check if the query is about a specific document
         document_specific = False
@@ -669,75 +670,38 @@ def search():
             if potential_docs:
                 # Boost the query with the document name to improve retrieval
                 query = f"{query} {' '.join(potential_docs)}"
+                print(f"Document-specific query detected: {query}")
         
         # Get embedding for the query
         query_embedding = get_embedding(query)
         
-        # Search for similar documents
+        # Search for similar documents - use a higher top_k for document-specific queries
+        top_k = 15 if document_specific else 5
         results = vector_store.search(query_embedding, top_k=top_k)
         
-        # Enhance results with more context
-        documents = []
-        for result in results:
-            # Check if result has the expected structure
-            if 'document' in result:
-                doc = result['document']
-            else:
-                # If the result is already a document (not wrapped in a 'document' field)
-                doc = result
-                print(f"Document found: {doc.get('title', 'Unknown')} (id: {doc.get('id', 'Unknown')})")
-            
-            # Make a copy to avoid modifying the original
-            doc_copy = doc.copy() if isinstance(doc, dict) else {'content': str(doc)}
-            
-            # Try to get surrounding chunks for more context if this is a document-specific query
-            if document_specific and isinstance(doc, dict) and 'id' in doc:
-                try:
-                    doc_id_parts = doc['id'].split('-')
-                    if len(doc_id_parts) > 1:
-                        base_id = doc_id_parts[0]
-                        chunk_index = int(doc_id_parts[1])
-                        
-                        # Try to get previous and next chunks
-                        prev_id = f"{base_id}-{chunk_index-1}"
-                        next_id = f"{base_id}-{chunk_index+1}"
-                        
-                        prev_doc = vector_store.get_document(prev_id)
-                        next_doc = vector_store.get_document(next_id)
-                        
-                        # Add content from previous chunk if available
-                        if prev_doc and 'content' in prev_doc:
-                            doc_copy['content'] = prev_doc['content'] + "\n\n" + doc_copy.get('content', '')
-                        
-                        # Add content from next chunk if available
-                        if next_doc and 'content' in next_doc:
-                            doc_copy['content'] = doc_copy.get('content', '') + "\n\n" + next_doc['content']
-                except Exception as e:
-                    print(f"Error enhancing document context: {e}")
-                    # Continue with the original document if there's an error
-            
-            # Clean up content if needed - add spaces between words that are run together
-            if 'content' in doc_copy and isinstance(doc_copy['content'], str):
-                # Fix common OCR issues where words are run together
-                doc_copy['content'] = re.sub(r'([a-z])([A-Z])', r'\1 \2', doc_copy['content'])
-            
-            documents.append(doc_copy)
-        
-        # If no documents were found, return an empty list
-        if not documents:
-            print(f"No documents found for query: {query}")
-            return jsonify({
-                'documents': [],
-                'query': query,
-                'message': 'No relevant documents found'
+        # Format results for the frontend
+        formatted_results = []
+        for doc in results:
+            formatted_results.append({
+                "title": doc.get("title", "Unknown"),
+                "content": doc.get("content", "No content available"),
+                "source": doc.get("source", "Unknown"),
+                "page": doc.get("page", ""),
+                "score": doc.get("similarity", 0)
             })
         
+        print(f"Found {len(formatted_results)} results for query: {query}")
+        
         return jsonify({
-            'documents': documents,
-            'query': query
+            "query": query,
+            "results": formatted_results
         })
     except Exception as e:
         import traceback
-        print(f"Error in search endpoint: {e}")
+        print(f"Error in document search endpoint: {e}")
         print(traceback.format_exc())
-        return jsonify({'error': str(e), 'documents': []}), 500
+        return jsonify({
+            "query": query,
+            "results": [],
+            "error": str(e)
+        }), 500
