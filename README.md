@@ -152,3 +152,9 @@ Use open-source LLMs (not Gemini, OpenAI, etc.) for the project.
 Fine-tune an LLM to have an interview preparation focus.
 Add User Session Management to log in, register, and save chat history for the user.
 Implement secure and anonymized logging to track errors and performance without exposing sensitive data.
+
+## Feedback:
+
+It was the second project review with Ignas and again he demonstrated solid knowledge on the project and presented quite interesting work for this project. So, for this project Ignas developed a simple RAG system where all components technically worked, however there were some lack of arguments and solution explainability during the review. For example, talking about shunning strategy, that should be tested & experimented in order to find the best one, as well as retrieval part should take appropriate number of most similar chunks, not hardcoded one. We clearly discussed that during the project review. 
+Moreover, I would suggest to improve user interface in a way to generate more valuable outcomes for the end user. It was a good idea to leverage functionality of PDF parser which worked well and was connected to chunking mechanism. In this area, I would suggest to polish the chunking part in order to avoid covering multiple parts of paragraph per single chunk. That relatively strongly impact overall RAG performance.
+I am sure Ignas is a strong and motivated learner and I believe in case having more time he would build even more efficient application in all perspectives. I hope that the review was useful and wishing all the best in further assignments in the course!
